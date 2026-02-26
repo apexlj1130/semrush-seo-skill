@@ -6,28 +6,56 @@ An [OpenClaw](https://openclaw.ai) skill that automates keyword research workflo
 
 ## Features
 
-- **Keyword research** — query Vol / KD / CPC for any keyword (single or batch)
-- **Related keyword expansion** — discover long-tail variations via `ideas.GetKeywords`
-- **SERP analysis** — see who ranks for your target keywords
-- **Competitor backlink analysis** — find the sites linking to competitors (= your future link-building targets)
-- **Auto-filter** — marks keywords passing the 3-metric threshold: Vol≥500 + KD≤40% + CPC≥$1
-- **CSV output** — batch queries export to CSV for easy review
+**Semrush layer** (primary, ~1500 keywords/day limit):
+- Batch keyword research (50 keywords/call) — Vol / KD / CPC / Competition
+- Related keyword expansion via `ideas.GetKeywords`
+- SERP competitor analysis
+- Competitor backlink discovery
+
+**Similarweb layer** (fallback when Semrush quota is exhausted):
+- Single-keyword queries — Vol / KD / CPC + **zero-click rate** (Semrush doesn't have this)
+- Search intent classification (Navigational / Informational / Transactional)
+- Domain Top Pages analysis for competitor keyword mining
+
+**Both tools:**
+- Auto-filter: marks keywords as `qualifies=YES` when Vol≥500 + KD≤40% + CPC≥$1
+- CSV batch output with identical column format
 
 ## Quick Start
 
+### Semrush (primary, ~1500 keywords/day)
+
 ```bash
-# 1. Setup auth (run once, then whenever cf_clearance expires ~24h)
+# Setup auth (run once, then whenever cf_clearance expires ~24h)
 bash scripts/setup.sh <cf_clearance_value>
 
-# 2. Single keyword query
+# Single keyword query
 python3 scripts/semrush_query.py "invoice generator"
 
-# 3. Batch query → CSV
+# Batch query → CSV
 python3 scripts/semrush_query.py --batch keywords.txt --output results.csv
 
-# 4. Competitor backlink analysis
+# Competitor backlink analysis
 python3 scripts/semrush_query.py --backlinks invoice-generator.com
 ```
+
+### Similarweb (fallback when Semrush quota runs out)
+
+```bash
+# First-time setup (cf_clearance + GMITM_token + GMITM_ec from sim.3ue.com cookies)
+bash scripts/similarweb-setup.sh <cf_clearance> <GMITM_token> <GMITM_ec>
+
+# Refresh only cf_clearance (every ~24h; token is valid ~3 days)
+bash scripts/similarweb-setup.sh <cf_clearance>
+
+# Single keyword — returns Vol/CPC/KD + zero-click rate + search intent
+python3 scripts/similarweb_query.py "invoice generator"
+
+# Batch → CSV (same format as Semrush output)
+python3 scripts/similarweb_query.py --batch keywords.txt --output sw_results.csv
+```
+
+> ⚠️ sim.3ue.com uses a **different GMITM_token** from sem.3ue.com — they cannot be shared.
 
 ## Getting cf_clearance
 
@@ -70,12 +98,14 @@ CPC is the most direct signal of commercial value. A keyword with low KD but low
 
 ```
 semrush-seo/
-├── SKILL.md            # OpenClaw skill instructions
-├── README.md           # This file
-├── _meta.json          # Skill metadata
+├── SKILL.md                  # OpenClaw skill instructions
+├── README.md                 # This file
+├── _meta.json                # Skill metadata
 └── scripts/
-    ├── semrush_query.py  # Main tool (Python 3, stdlib only)
-    └── setup.sh          # Auth setup script
+    ├── semrush_query.py      # Semrush: keyword research + backlinks
+    ├── setup.sh              # Semrush: auth setup (cf_clearance)
+    ├── similarweb_query.py   # Similarweb: keyword research fallback
+    └── similarweb-setup.sh   # Similarweb: auth setup (cf_clearance + GMITM)
 ```
 
 ## Requirements

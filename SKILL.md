@@ -1,6 +1,6 @@
 ---
 name: semrush-seo
-description: Automated SEO keyword research and competitor backlink analysis via Semrush (sem.3ue.com proxy). Query keyword volume, KD, CPC, SERP data, and competitor backlinks without manual CSV exports. Use when doing keyword research, competitor analysis, or building keyword lists for new sites.
+description: Automated SEO keyword research via Semrush + Similarweb (sem.3ue.com / sim.3ue.com proxies). Dual-layer design - Semrush for batch queries (~1500 keywords/day limit), Similarweb as fallback with zero-click rate data. Use when doing keyword research, competitor analysis, or building keyword lists for new sites.
 homepage: https://github.com/apexlj1130/semrush-seo-skill
 metadata: {"clawdbot":{"emoji":"🔍","requires":{"bins":["python3"]}}}
 ---
@@ -64,6 +64,42 @@ python3 {baseDir}/scripts/semrush_query.py --backlinks joist.app --bl-page 1
 输出：按 page_ascore 排序的外链列表（source_url / anchor / AS分 / dofollow过滤）
 
 用途：找到推荐竞品的目录站 → 建站后第一批外链提交目标
+
+---
+
+## Similarweb 备用层（Semrush 配额耗尽时）
+
+> Semrush 限额约 **1500 词/天**。配额耗尽后切换 Similarweb。
+
+### 首次设置 / TOKEN 过期时（约每3天）
+
+```bash
+# 从 sim.3ue.com 的 F12 → Application → Cookies 复制三个值：
+bash {baseDir}/scripts/similarweb-setup.sh <cf_clearance> <GMITM_token> <GMITM_ec>
+
+# 只刷新 cf_clearance（token 未过期时，每天一次）
+bash {baseDir}/scripts/similarweb-setup.sh <cf_clearance>
+```
+
+⚠️ sim.3ue.com 的 `GMITM_token` 与 sem.3ue.com **不同，不可共用**
+
+### 查询命令（与 Semrush 用法相同）
+
+```bash
+# 单词查询（Vol/CPC/KD/零点击率/搜索意图）
+python3 {baseDir}/scripts/similarweb_query.py "invoice generator"
+
+# 批量查询 → CSV
+python3 {baseDir}/scripts/similarweb_query.py --batch keywords.txt --output sw_results.csv
+
+# 域名 Top Pages（站找词）
+python3 {baseDir}/scripts/similarweb_query.py --domain joist.app --top-pages
+```
+
+### 独有数据：零点击率
+
+Similarweb 特有 `latestZeroClicks` 字段（如 32.5%），表示搜索后不点击任何结果的比例。
+零点击率高 → 用户在搜索结果页直接得到答案 → 实际流量打折扣。
 
 ---
 
